@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+    <head> 
+        <meta charset="utf-8" />
+        <title>mkToHtmlDemo</title>
+
+        <!--引入样式文件-->
+        <link rel="stylesheet" href="editor.md-master/examples/css/style.css" />
+        <link rel="stylesheet" href="editor.md-master/css/editormd.preview.css" />
+
+        <!--引入js文件-->
+        <script src="editor.md-master/examples/js/jquery.min.js"></script>
+        <script src="editor.md-master/lib/marked.min.js"></script>
+        <script src="editor.md-master/lib/prettify.min.js"></script>
+        <script src="editor.md-master/lib/raphael.min.js"></script>
+        <script src="editor.md-master/lib/underscore.min.js"></script>
+        <script src="editor.md-master/lib/sequence-diagram.min.js"></script>
+        <script src="editor.md-master/lib/flowchart.min.js"></script>
+        <script src="editor.md-master/lib/jquery.flowchart.min.js"></script>
+        <script src="editor.md-master/editormd.js"></script>
+
+    </head>
+
+    <body>
+        <!--输入需要转换的markdown文件开始-->
+        <!-- <h1>转换前</h1> -->
+        <textarea id="demo1" style="display:none;">
+## Query
+
+在一次询问后，“预测答案”，并安排后两次询问。
+
+预测成功，两次询问有效。预测失败，就浪费了两次询问。
+
+我们定义一个数列 $$a[x]=a[x-1]+a[x-3]+1$$（$$+1$$是等号的情况），$$a[1]=0,a[2]=0,a[3]=1$$。表示通过这个方法，用 $$x$$ 次可以询问出值域在 $$[1,a[x]]$$ 之间的所有数。显然，$$3$$ 次可以问出一个数。
+
+![image](0812.png)
+
+在第三步询问时，第一步询问的答案已经出来了。
+
+​	若答案为 $$=$$，即为这个数；
+
+​	若答案为 $$>$$，则后面两次询问浪费，结构和后面的询问没关系。将 $$x-=3$$，当做一个子问题递归处理； 
+
+​	若答案为 $$<$$，用类似的方法，第四步询问 $$a[x-2]$$ 的左子区间（长度为 $$a[x-3]$$）的第 $$a[x-4]+1$$ 个数，此时得出了第二步的答案，类似的处理即可。
+
+不管怎样，三步询问后，下一次询问的区间长度都为 $$a[x-3]$$。则总共需要的次数是 $$O(x)$$级别的。
+
+又因为 $$a[56]>10^9$$，所以次数不超过 $$56$$ 次。
+
+## Xorsum
+
+有一些显然的条件：和不小于异或和（$$s\geq x$$），和与异或和奇偶性相同（$$2\mid s-x$$）。
+
+最大值最小显然可以二分答案 $$mid$$，如果我们知道每一位有几个 $$1$$，就可以贪心地得到答案。每次尽量分给 $$<m$$ 的数（即没有压上界的），分不下的话剩下的分给前面几位暂时 $$=m$$ 的数（继续压上界）。
+
+怎么求呢？先令 $$b_i$$ 的奇偶性和 $$x$$ 第 $$2^i$$ 位的奇偶性一样，然后再加上 $$(s-x)/2$$ 的这一位的两倍（此处十分巧妙，先从 $$s$$ 中减去 $$x$$ 来固定奇偶性，然后将剩下的每位都是 $$2$$ 的倍数的加上）。
+
+我们设第 $$i$$ 位 $$1$$ 的个数为 $$b_i$$，我们先求出一个字典序最大的 $$b_i$$（即先满足 $$b_{60}$$ 最大，再满足 $$b_{59}$$ 最大，...）。那么所有可能的 $$\{b_i\}$$ 即为每次把某个 $$u$$，$$b[u]-=2,b[u-1]+=4$$ 就是所有答案（由于奇偶性不能变）。
+
+直接 $$dp$$ 模拟这个过程。设 $$dp[i][j]$$ 表示决定好了从高到低的前 $$i$$ 位，当前有 $$j$$ 个数已经小于 $$m$$，这时候 $$b[i-1]$$ 加多少倍的 $$4$$ 。
+
+那么当前的 $$b[i-1]$$ 是 $$b_0[i-1]+4\times dp[i][j]$$（$$b_0$$ 就是初始时的那个字典序最大的 $$\{b_i\}$$），令 $$u$$ 为当前的 $$b[i-1]$$。
+
+看 $$m$$ 的 $$2^i$$ 位
+
+​- 若为 $$0$$，就必须把 $$u$$ 整成不超过 $$j$$，转移到 $$f[i-1][j]$$（因为超过 $$j$$ 的话只能选当前暂时 $$=m$$，而 $$m$$ 当前位为 $$0$$，所以它们当前位不能为 $$1$$），那么要从当前的 $$b$$ 减去 $$(max(u-j,0)+1)/2*2$$（必须减去偶数个，$$(x+1)/2*2$$ 即为 $$\geq x$$ 的最小偶数）。
+
+​- 若为 $$1$$，如果当前的 $$u\leq n$$，那么新的 $$j'=\max(\min(n-(u-j),n),j)$$ 时（先尽量把 $$u$$ 放在 $$j$$ 中，那么剩下的 $$u-j$$ 个必须为 $$1$$，它们依旧压上界，其它的可以不压上界）。对于其它的 $$j'$$，先尽量把 $$j'$$ 放在 $$j$$ 中，那么剩下的 $$j'-j$$ 必须为 $$1$$，而剩下必须要留下 $$u\%2$$ 个。令 $$v=n-(j'-j)$$，那么当前留下 $$\min(u,(v-u\%2)/2*2+u\%2)$$。那么当前行都减去 $$u-\min(u,(v-u\%2)/2*2+u\%2)$$，下一行减去 $$2\min(u,(v-u\%2)/2*2+u\%2)$$。
+
+注意到：如果有 $$f[i][j]=0$$ 且 $$j\geq 3$$，那么一定有解，因为初始的 $$b$$ 都不超过 $$3$$，把这些放到 $$j$$ 个数中即可；另外一个是我们并不需要用借位一次将 $$j$$ 增加太多，因为如果借了 $$2$$，后面就要还 $$4$$，所以不应该借太多（？）。
+
+因此我们只需要转移到 $$j<5$$ 或 $$j'-j<2$$ 的状态，状态数就是 $$O(\log)$$ 的。
+
+## Path
+
+首先，将它看成在坐标轴上，每次往右上或右下走一格，不能经过 $$y=-1$$ 和 $$y=m-n+1$$，问走到 $$(n+m,m-n)$$ 的方案数。
+
+直接容斥翻折即可。
+        </textarea>   
+        <!--输入需要转换的markdown文件结束-->
+
+    <!--点击该按钮进行转换-->
+    <!-- <form> -->
+        <!-- <input type="button" name="Submit" onclick="mdToHml()"/> -->
+    <!-- </form> -->
+    <!-- <button onclick="mdToHml();" type="button">点击转Html</button> -->
+
+
+    <!-- <p>=================  华丽丽的分割线 ====================</p> -->
+
+    <!-- <h1>转换后</h1> -->
+
+    <!--在该div中展示,如有初始化的数据可以放在textarea中-->
+    <div id="testEditorMdview">
+        <textarea id="appendTest" style="display:none;"></textarea>
+    </div>
+
+
+    <!--js开始-->
+    <script type="text/javascript"> 
+
+        //markDown转HTMl的方法
+        function mdToHml(){
+
+            //先对容器初始化，在需要展示的容器中创建textarea隐藏标签，
+            $("#testEditorMdview").html('<textarea id="appendTest" style="display:none;"></textarea>');
+            var content=$("#demo1").val();//获取需要转换的内容
+            $("#appendTest").val(content);//将需要转换的内容加到转换后展示容器的textarea隐藏标签中
+
+            //转换开始,第一个参数是上面的div的id
+            editormd.markdownToHTML("testEditorMdview", {
+                htmlDecode: "style,script,iframe", //可以过滤标签解码
+                emoji: true,
+                taskList:true,
+                tex: true,               // 默认不解析
+                flowChart:true,         // 默认不解析
+                sequenceDiagram:true,  // 默认不解析
+            });
+            
+        }
+        mdToHml();
+    </script>
+     <!--js结束-->
+
+    </body>
+</html>
